@@ -1,27 +1,43 @@
 name: Release
 
-on:
-  push:
-    tags:
-      - mountpoint-s3-[0-9]+.*
-
 permissions:
   contents: write
 
+on:
+  push:
+    tags:
+      - v[0-9]+.*
 
 jobs:
-  create-github-release:
+  create-release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: taiki-e/create-gh-release-action@v1
-      with:
-        title: "mountpoint-s3 v$version"
-        # Strip this prefix off the tag to discover the version number
-        prefix: mountpoint-s3
-        draft: true
-        changelog: mountpoint-s3/CHANGELOG.md
-        # TODO: make this mandatory once we have the format nailed down
-        allow-missing-changelog: true
-        branch: main
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          # (optional) Path to changelog.
+          changelog: CHANGELOG.md
+          # (required) GitHub token for creating GitHub Releases.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-dependencies
+        with:
+          fuseVersion: 2
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
+          # Note that glob pattern is not supported yet.
+          bin: mount-s3
+          # (required) GitHub token for uploading assets to GitHub Releases.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checksum: sha512

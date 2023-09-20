@@ -14,7 +14,7 @@ use crate::prefix::Prefix;
 use fuser::ReplyXTimes;
 use fuser::{
     FileAttr, Filesystem, KernelConfig, ReplyAttr, ReplyBmap, ReplyCreate, ReplyData, ReplyEmpty, ReplyEntry,
-    ReplyIoctl, ReplyLock, ReplyLseek, ReplyOpen, ReplyWrite, ReplyXattr, Request, TimeOrNow,
+    ReplyIoctl, ReplyLock, ReplyLseek, ReplyOpen, ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow,
 };
 use mountpoint_s3_client::ObjectClient;
 
@@ -70,6 +70,11 @@ where
     #[instrument(level="warn", skip_all, fields(req=_req.unique()))]
     fn init(&self, _req: &Request<'_>, config: &mut KernelConfig) -> Result<(), libc::c_int> {
         block_on(self.fs.init(config).in_current_span())
+    }
+
+    #[instrument(level="warn", skip_all, fields(req=_req.unique()))]
+    fn statfs(&self, _req: &Request<'_>, _ino: u64, reply: ReplyStatfs) {
+        reply.statfs(0x100000000000, 0x100000000000, 0x100000000000, 0, 0, 512, 255, 0);
     }
 
     #[instrument(level="warn", skip_all, fields(req=_req.unique(), ino=parent, name=?name))]

@@ -466,7 +466,7 @@ fn mount(args: CliArgs) -> anyhow::Result<FuseSession> {
 
     let fs = S3FuseFilesystem::new(client, runtime, &args.bucket_name, &prefix, filesystem_config);
 
-    let fs_name = String::from("mountpoint-s3");
+    let fs_name = args.bucket_name;
     let mut options = vec![
         MountOption::DefaultPermissions,
         MountOption::FSName(fs_name),
